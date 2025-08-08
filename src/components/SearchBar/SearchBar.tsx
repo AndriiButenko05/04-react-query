@@ -1,17 +1,21 @@
 import styles from "./SearchBar.module.css";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
+import { Formik, Form, Field } from "formik";
 interface SearchBarProps {
   onSubmit: (title: string) => void;
 }
 
 export default function SearchBar({ onSubmit }: SearchBarProps) {
-  const handleSubmit = (formData: FormData) => {
-    const title = formData.get("query") as string;
+  const handleSubmit = (values: { query: string }) => {
+    const title = values.query;
     if (title.trim() === "") {
       toast.error("Please enter your search query.");
       return;
     }
     onSubmit(title);
+  };
+  const initialFormValues = {
+    query: "",
   };
   return (
     <header className={styles.header}>
@@ -25,21 +29,24 @@ export default function SearchBar({ onSubmit }: SearchBarProps) {
         >
           Powered by TMDB
         </a>
-        <form className={styles.form} action={handleSubmit}>
-          <input
-            className={styles.input}
-            type="text"
-            name="query"
-            autoComplete="off"
-            placeholder="Search movies..."
-            autoFocus
-          />
-          <button className={styles.button} type="submit">
-            Search
-          </button>
-        </form>
+        <Formik initialValues={initialFormValues} onSubmit={handleSubmit}>
+          {() => (
+            <Form className={styles.form}>
+              <Field
+                className={styles.input}
+                type="text"
+                name="query"
+                autoComplete="off"
+                placeholder="Search movies..."
+                autoFocus
+              />
+              <button className={styles.button} type="submit">
+                Search
+              </button>
+            </Form>
+          )}
+        </Formik>
       </div>
-      <Toaster position="top-center" reverseOrder={false} />
     </header>
   );
 }

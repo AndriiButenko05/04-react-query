@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SearchBar from "../SearchBar/SearchBar";
 import fetchMovies from "../../services/movieService";
 import Loader from "../Loader/Loader";
@@ -16,7 +16,7 @@ export default function App() {
   const [title, setTitle] = useState<string>("");
   const [movie, setMovie] = useState<Movie | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, isSuccess } = useQuery({
     queryKey: ["movies", title, currentPage],
     queryFn: () => fetchMovies(title, currentPage),
     enabled: title !== "",
@@ -25,12 +25,14 @@ export default function App() {
   const totalPages = data?.total_pages || 0;
   function handleSearch(title: string) {
     setCurrentPage(1);
-    if (data?.results.length === 0) {
-      toast.error("No movies found");
-      return;
-    }
     setTitle(title);
   }
+  useEffect(() => {
+    if (data?.results.length === 0) {
+      toast.error("No movies were found");
+      return;
+    }
+  }, [data]);
   function openModal(movie: Movie) {
     setMovie(movie);
   }
@@ -40,7 +42,7 @@ export default function App() {
   return (
     <div>
       <SearchBar onSubmit={handleSearch}></SearchBar>
-      <Toaster position="top-center" reverseOrder={false} />
+      {isSuccess && <Toaster position="top-center" reverseOrder={false} />}
       {totalPages > 1 && (
         <ReactPaginate
           pageCount={totalPages}
@@ -56,7 +58,9 @@ export default function App() {
       )}
       {isLoading && <Loader></Loader>}
       {isError && <ErrorMessage></ErrorMessage>}
-      {data && <MovieGrid movies={data.results} onSelect={openModal} />}
+      {data && data.results.length !== 0 && (
+        <MovieGrid movies={data.results} onSelect={openModal} />
+      )}
       {movie && <MovieModal onClose={closeModal} movie={movie} />}
     </div>
   );
